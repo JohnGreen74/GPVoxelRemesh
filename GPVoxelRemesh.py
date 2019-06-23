@@ -1,7 +1,7 @@
 bl_info = {
     "name": "GP_CNV",
     "author": "Asch",
-    "version": (1, 0),
+    "version": (1.1, 0),
     "blender": (2, 80, 0),
     "location": "View3D > Object > GP_CNV_action",
     "description": "GreasePensil to VoxelMesh",
@@ -20,12 +20,14 @@ from mathutils import Vector
 #real actions
 def gpconvertor(self, context):
     
-    bpy.ops.object.mode_set(mode='OBJECT')  
-    bpy.ops.gpencil.convert(type='CURVE', use_timing_data=True)
-    bpy.ops.object.select_all(action='DESELECT')
-    bpy.data.objects['GP_Layer'].select_set(True)
-    OB = bpy.data.objects['GP_Layer']
-    bpy.context.view_layer.objects.active = OB
+    bpy.ops.object.mode_set(mode='OBJECT')                                      #force switch to object mode
+    bpy.ops.object.gpencil_modifier_apply(apply_as='DATA', modifier="Mirror")   #apply mirror modifier to grease pencil if exist 
+    
+    bpy.ops.gpencil.convert(type='CURVE', use_timing_data=True)                 #convert current stroke to curve
+    bpy.ops.object.select_all(action='DESELECT')                                #deselect all
+    bpy.data.objects['GP_Layer'].select_set(True)                               #select new GP_Layer only
+    OB = bpy.data.objects['GP_Layer']                                           #assign GP_Layer to OB
+    bpy.context.view_layer.objects.active = OB                                  #set GP_Layer active
     
     
     
@@ -70,12 +72,16 @@ def gpconvertor(self, context):
             OB.name = "VoxelMesh" 
             bpy.ops.object.remesh()
         else:
-            bpy.data.objects['VoxelMesh'].select_set(True)
+            bpy.data.objects['VoxelMesh'].select_set(True)          #select and set active old VoxelMesh to preserve all modifiers there
+            bpy.context.view_layer.objects.active = OB              #set active
+            #bpy.data.objects['NewVoxelMesh'].select_set(True)
             bpy.ops.object.join()
+            bpy.context.object.data.voxel_size = self.voxel_size / 100
+            bpy.context.object.data.smooth_normals = self.smooth
             bpy.ops.object.remesh()
-            OB = bpy.data.objects['NewVoxelMesh']
-            bpy.data.objects['NewVoxelMesh'].select_set(True)
-            OB.name = "VoxelMesh"
+            #OB = bpy.data.objects['NewVoxelMesh']
+            #bpy.data.objects['NewVoxelMesh'].select_set(True)
+            #OB.name = "VoxelMesh"
     
     
 
