@@ -49,7 +49,7 @@ def gpconvertor(self, context):
     bpy.context.view_layer.objects.active = OB
     
 
-    bpy.context.object.data.bevel_depth = self.bevel_depth/100
+    bpy.context.object.data.bevel_depth = self.bevel_depth/200
     bpy.context.object.data.resolution_u = 1
 
 
