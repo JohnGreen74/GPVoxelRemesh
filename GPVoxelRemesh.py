@@ -90,10 +90,20 @@ def gpconvertor(self, context):
             bpy.data.objects['VoxelMesh'].select_set(True)          #select and set active old VoxelMesh to preserve all modifiers there
             bpy.context.view_layer.objects.active = OB              #set active
             bpy.ops.object.join()
-            bpy.context.object.data.smooth_normals = self.smooth     
-    
+            bpy.context.object.data.smooth_normals = self.smooth   
+    else:  
+        OB = bpy.data.objects['NewVoxelMesh']
+        bpy.data.objects['NewVoxelMesh'].select_set(True)
+        OB.name = "VoxelMesh" 
 
 def gpfastcreate(self, context):
+    
+    if self.join == True:
+        bpy.ops.object.mode_set(mode='OBJECT')                                      #force switch to object mode
+        OB = bpy.context.view_layer.objects.active
+        OB.name = "VoxelMesh" 
+    
+    
     bpy.ops.object.gpencil_add(location=(0, 0, 0), type='EMPTY')
     bpy.ops.gpencil.paintmode_toggle()
     
@@ -111,10 +121,10 @@ class OBJECT_OT_Asch_gp_to_mesh(Operator):
     bevel_depth = bpy.props.FloatProperty(name="bevel_depth*100", default=1)
     bevel_resolution = bpy.props.FloatProperty(name="bevel_resolution", default=0)
     #resolution_u = bpy.props.FloatProperty(name="resolution_u", default=1)
-    voxel_size = bpy.props.FloatProperty(name="voxel_size*100", default=20, min=1, max=100)
+    voxel_size = bpy.props.FloatProperty(name="voxel_size*100", default=5, min=1, max=100)
     smooth = bpy.props.BoolProperty(name="smooth", default=False)
-    merge = bpy.props.BoolProperty(name="merge with previous", default=True)
-    join = bpy.props.BoolProperty(name="join with previous", default=True)
+    merge = bpy.props.BoolProperty(name="remesh with previous", default=False)
+    join = bpy.props.BoolProperty(name="join with previous", default=False)
     
     
 
