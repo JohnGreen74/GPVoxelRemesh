@@ -17,10 +17,18 @@ from bpy.props import FloatVectorProperty
 from bpy_extras.object_utils import AddObjectHelper, object_data_add
 from mathutils import Vector
 
+#TODO: check if bezier curve has a line
+
 #real actions
 def gpconvertor(self, context):
     
     bpy.ops.object.mode_set(mode='OBJECT')                                      #force switch to object mode
+    bpy.ops.object.select_all(action='DESELECT')                                #deselect all # make sure we have GPencil selected 
+    bpy.data.objects['GPencil'].select_set(True)  
+    OB = bpy.data.objects.get("GPencil")
+    bpy.context.view_layer.objects.active = OB
+    
+    
     bpy.ops.object.gpencil_modifier_apply(apply_as='DATA', modifier="Mirror")   #apply mirror modifier to grease pencil if exist 
     
     bpy.ops.gpencil.convert(type='CURVE', use_timing_data=True)                 #convert current stroke to curve
@@ -56,6 +64,7 @@ def gpconvertor(self, context):
 
     bpy.ops.object.convert(target='MESH')
     bpy.ops.object.editmode_toggle()
+    bpy.ops.mesh.select_mode(type="EDGE")
     bpy.ops.mesh.select_non_manifold()
     bpy.ops.mesh.fill_holes(sides=0)
     bpy.ops.object.editmode_toggle()
@@ -95,6 +104,10 @@ def gpconvertor(self, context):
         OB = bpy.data.objects['NewVoxelMesh']
         bpy.data.objects['NewVoxelMesh'].select_set(True)
         OB.name = "VoxelMesh" 
+        
+    bpy.ops.object.mode_set(mode='SCULPT')  
+
+
 
 def gpfastcreate(self, context):
     
