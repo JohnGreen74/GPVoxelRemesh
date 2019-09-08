@@ -40,15 +40,19 @@ def gpconvertor(self, context):
     
     #WORK with Curve object GP_Layer:
     bpy.ops.object.select_all(action='DESELECT')                                #deselect all
-    bpy.data.objects['GP_Layer'].select_set(True)                               #select new GP_Layer only
-    OB = bpy.data.objects['GP_Layer']                                           #assign GP_Layer to OB
+    #bpy.data.objects['GP_Layer'].select_set(True)                               #select new GP_Layer only
+    OB = bpy.data.objects.get("GP_Layer")
+    #OB = bpy.data.objects['GP_Layer']                                           #assign GP_Layer to OB
+    if OB == None:
+        OB = bpy.data.objects.get("Primitives")                                           #assign GP_Layer to OB
+    else: 
+        return True
     bpy.context.view_layer.objects.active = OB                                  #set GP_Layer active
     
     
     
-    #if self.merge == True:
-    #    OB_Old = OB
-    bpy.data.objects['GP_Layer'].select_set(True)
+
+    #bpy.data.objects['GP_Layer'].select_set(True)
     OB.name = "NewVoxelMesh"
     
     
@@ -212,10 +216,12 @@ class OBJECT_OT_Asch_gp_to_mesh(Operator):
         
     def execute(self, context):
 
-        objectType = bpy.context.active_object.type
-        if objectType == 'CURVE':
-            gpconvertor_curve_finish(self, context)
-            return {'FINISHED'} 
+        objectO = bpy.context.active_object
+        if objectO != None:
+            objectType = bpy.context.active_object.type
+            if objectType == 'CURVE':
+                gpconvertor_curve_finish(self, context)
+                return {'FINISHED'} 
 
         OB = None
         OB = bpy.data.objects.get("GPencil")
