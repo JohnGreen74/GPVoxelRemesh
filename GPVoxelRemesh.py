@@ -20,6 +20,7 @@ from mathutils import Vector
 #TODO: check if bezier curve has a line
 
 #real actions
+#STEP 2: convert GP to something
 def gpconvertor(self, context):
     
     #WORK with Grease Pencil object GPencil:
@@ -28,6 +29,9 @@ def gpconvertor(self, context):
     bpy.data.objects['GPencil'].select_set(True)  
     OB = bpy.data.objects.get("GPencil")
     bpy.context.view_layer.objects.active = OB
+    
+    #todo
+    #
     
     
     bpy.ops.object.gpencil_modifier_apply(apply_as='DATA', modifier="Mirror")   #apply mirror modifier to grease pencil if exist 
@@ -64,6 +68,26 @@ def gpconvertor(self, context):
     bpy.context.object.data.resolution_u = 1
     bpy.context.object.data.bevel_resolution = self.bevel_resolution;
 
+    #convert to cuve only case:
+    if self.splineonly == True: 
+        bpy.ops.curve.simplify(error=self.simple/100)
+        
+        bpy.ops.object.select_all(action='DESELECT')
+        bpy.data.objects['NewVoxelMesh'].select_set(True)            #delete old object
+        OB_X = bpy.data.objects['NewVoxelMesh']                      #delete old object
+        bpy.context.view_layer.objects.active = OB_X                 #delete old object
+        bpy.ops.object.delete()  
+        
+        bpy.data.objects['Simple_NewVoxelMesh'].select_set(True)
+        OB = bpy.data.objects['Simple_NewVoxelMesh']
+        bpy.context.view_layer.objects.active = OB
+        OB.name = "Tube"
+        bpy.context.object.data.bevel_depth = self.bevel_depth/10
+        bpy.context.object.data.resolution_u = 1
+        bpy.context.object.data.bevel_resolution = self.bevel_resolution;
+        if self.tosculpt == True: 
+            bpy.ops.object.mode_set(mode='EDIT') 
+        return True
     
     bpy.ops.object.convert(target='MESH')
     
@@ -115,14 +139,19 @@ def gpconvertor(self, context):
         OB = bpy.data.objects['NewVoxelMesh']
         bpy.data.objects['NewVoxelMesh'].select_set(True)
         OB.name = "VoxelMesh" 
-        
-    bpy.ops.object.mode_set(mode='SCULPT')  
+    
+    if self.tosculpt == True:    
+        bpy.ops.object.mode_set(mode='SCULPT')
+    else:
+        bpy.ops.object.mode_set(mode='OBJECT') 
 
 
-
+#STEP 1: create Grease Pencil
 def gpfastcreate(self, context):
     
-    if self.join == True:
+    objj = bpy.context.active_object
+    
+    if objj != None and self.join == True and self.splineonly == False:
         bpy.ops.object.mode_set(mode='OBJECT')                                      #force switch to object mode
         OB = bpy.context.view_layer.objects.active
         OB.name = "VoxelMesh" 
@@ -133,7 +162,29 @@ def gpfastcreate(self, context):
         bpy.ops.object.gpencil_modifier_add(type='GP_MIRROR')
     bpy.ops.gpencil.paintmode_toggle()
     
+#STEP 3: convert curve to mesh
+def gpconvertor_curve_finish(self, context):
+    
+    OB = bpy.context.active_object
+    OB.name = "NewVoxelMesh"
+    
+    bpy.ops.object.convert(target='MESH')
+    
+    #WORK with mesh object:
+    bpy.ops.object.editmode_toggle()
+    bpy.ops.mesh.select_mode(type="EDGE")
+    bpy.ops.mesh.select_non_manifold()
+    bpy.ops.mesh.fill_holes(sides=0)
+    bpy.ops.object.editmode_toggle()
+    bpy.context.object.data.remesh_voxel_size = self.remesh_voxel_size / 100
+    bpy.context.object.data.remesh_smooth_normals = self.smooth
 
+    OB.name = "VoxelMesh" 
+    
+    if self.tosculpt == True:    
+        bpy.ops.object.mode_set(mode='SCULPT')
+    else:
+        bpy.ops.object.mode_set(mode='OBJECT') 
 
 
 
@@ -143,6 +194,9 @@ class OBJECT_OT_Asch_gp_to_mesh(Operator):
     bl_label = "GP to mesh convertor" #name in keymap preferences
     bl_options = {'REGISTER', 'UNDO'}
     
+    tosculpt = bpy.props.BoolProperty(name="to sculpt mode", default=False)
+    splineonly = bpy.props.BoolProperty(name="spline only", default=False)
+    simple = bpy.props.FloatProperty(name="simple", default=1)
     #limit = bpy.props.FloatProperty(name="limit", default=0.1)
     bevel_depth = bpy.props.FloatProperty(name="bevel_depth*100", default=1)
     bevel_resolution = bpy.props.FloatProperty(name="bevel_resolution", default=0)
@@ -154,11 +208,18 @@ class OBJECT_OT_Asch_gp_to_mesh(Operator):
     xmirror = bpy.props.BoolProperty(name="X Mirror", default=False)
     
     
-
+    
+        
     def execute(self, context):
+
+        objectType = bpy.context.active_object.type
+        if objectType == 'CURVE':
+            gpconvertor_curve_finish(self, context)
+            return {'FINISHED'} 
 
         OB = None
         OB = bpy.data.objects.get("GPencil")
+        #if objectType == 'GPENCIL': todo
         if OB is None:  
             gpfastcreate(self, context)
         else:
